@@ -32,11 +32,14 @@ from horseshoe_detailer import HorseshoeAvoidanceDetailer
 
 def generate_qm(nside=32, inner_radius_deg=1.995,
                 outer_radius_deg=2.025,
-                max_offset_deg=None) -> BaseQueueManager:
+                max_offset_deg=None,
+                mag_limit=3.0) -> BaseQueueManager:
     """Generate a QueueManager object.
 
     `max_offset_deg` caps how far the horseshoe detailer may move a pointing;
     None lets the detailer size the budget from the annulus width.
+    `mag_limit` is the limiting magnitude above which a star is considered
+    bright enough to avoid (a float, or a per-band dict).
     """
 
     detailer_list = []
@@ -46,6 +49,7 @@ def generate_qm(nside=32, inner_radius_deg=1.995,
     detailer_list.append(HorseshoeAvoidanceDetailer(inner_radius_deg=inner_radius_deg,
                                                     outer_radius_deg=outer_radius_deg,
                                                     max_offset_deg=max_offset_deg,
+                                                    mag_limit=mag_limit,
                                                     nside=nside))
 
     bf_list = []
@@ -59,7 +63,7 @@ def generate_qm(nside=32, inner_radius_deg=1.995,
 
 
 def get_scheduler(for_simulation=False, inner_radius_deg=1.995, outer_radius_deg=2.025,
-                  max_offset_deg=None) -> tuple[int, CoreScheduler]:
+                  max_offset_deg=None, mag_limit=3.0) -> tuple[int, CoreScheduler]:
     """Construct the LSST survey scheduler.
 
     The parameters are not accessible when calling as 'config'.
@@ -440,7 +444,8 @@ def get_scheduler(for_simulation=False, inner_radius_deg=1.995, outer_radius_deg
 
     qm = generate_qm(nside=nside, inner_radius_deg=inner_radius_deg,
                      outer_radius_deg=outer_radius_deg,
-                     max_offset_deg=max_offset_deg)
+                     max_offset_deg=max_offset_deg,
+                     mag_limit=mag_limit)
 
     # Combine into CoreScheduler
     scheduler = CoreScheduler(

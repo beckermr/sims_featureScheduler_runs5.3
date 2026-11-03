@@ -161,6 +161,13 @@ def sched_argparser() -> argparse.ArgumentParser:
         help="Directory for scheduler snapshots.",
     )
     parser.add_argument("--radius_choice", type=int, default=0)
+    parser.add_argument(
+        "--mag_limit",
+        type=float,
+        default=3.0,
+        help="Limiting magnitude for bright-star avoidance (stars with "
+        "mag <= mag_limit in the observation band are avoided).",
+    )
 
     return parser
 
@@ -172,9 +179,12 @@ if __name__ == "__main__":
 
     dbroot = args.dbroot
     out_dir = args.out_dir
+    # Keep the magnitude out of the filename decimal-point free, e.g.
+    # 4.0 -> "4", 4.5 -> "4p5".
+    mag_str = ("%g" % args.mag_limit).replace(".", "p")
     fileroot, extra_info = set_run_info(
         dbroot=dbroot,
-        file_end="radius_%i_v5.3.7_" % args.radius_choice,
+        file_end="radius_%i_mag_%s_v5.3.7_" % (args.radius_choice, mag_str),
         out_dir=out_dir,
     )
     years = np.round(args.survey_length / 365.25)
@@ -189,7 +199,8 @@ if __name__ == "__main__":
     # The detailer sizes its own offset budget from the annulus width, so no
     # per-preset offset is needed any more.
     nside, scheduler = get_scheduler(for_simulation=True, inner_radius_deg=inner_radius_deg,
-                                     outer_radius_deg=outer_radius_deg, max_offset_deg=None)
+                                     outer_radius_deg=outer_radius_deg, max_offset_deg=None,
+                                     mag_limit=args.mag_limit)
 
     too_scale = 1.0
     sim_ToOs, event_table = gen_all_events(
