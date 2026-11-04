@@ -7,9 +7,58 @@ from by_count_utils import FootprintCount, FootprintCountBasisFunction
 from survey_start import SURVEY_START_MJD
 
 
-def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD):
+Y3_MEDIAN_VISITS_SIM53_PER_BAND = {
+    "u": 10,
+    "g": 16,
+    "r": 40,
+    "i": 41,
+    "z": 33,
+    "y": 34,
+}
+
+
+def make_desi_footprints_for_y1_per_band(target_band, nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD, target_nvisits=None):
+    """make a footprint basis function for the DESI observations for DESI Y1 only per band
+    """
+
+    target_nvisits = target_nvisits or Y3_MEDIAN_VISITS_SIM53_PER_BAND
+
+    ra, dec = hpid2_ra_dec(nside, np.arange(hp.nside2npix(nside)))
+
+    stripes = get_desi_stripes()
+    result = np.zeros(ra.size, dtype=float)
+
+    desired_counts = np.zeros(ra.size, dtype=float)
+
+    for ramin, ramax, decmin, decmax, nu, year, name in zip(stripes["ramins"], stripes["ramaxs"],
+                                         stripes["decmins"], stripes["decmaxs"],
+                                         stripes["nus"], stripes["yrs"], stripes["names"]):
+
+        if int(year) != 1 or name not in ["SGC-6", "SGC-7"]:
+            continue
+
+        indx = np.where((dec > decmin) & (dec < decmax) & (is_in_ra_range(ra, ramin, ramax)))[0]
+        result[indx] = target_nvisits[target_band]
+        desired_counts[indx] = target_nvisits[target_band]
+    fpc = FootprintCount(mjd_start, nside=nside)
+    fpc.set_footprint(target_band, result)
+    bf = FootprintCountBasisFunction(bandname=target_band, nside=nside, footprint=fpc, mult_factor=1.,
+                                     mask_reward_below=-4, mask_above_count=None,)
+
+    return bf, desired_counts
+
+
+def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD, nu_overshoot_correction=None):
     """make a footprint basis function for the DESI observations.
     """
+
+    nu_overshoot_correction = nu_overshoot_correction or {
+        1: 0,
+        2: 0,
+        3: 5,
+        4: 5,
+        5: 5,
+    }
 
     ra, dec = hpid2_ra_dec(nside, np.arange(hp.nside2npix(nside)))
 
@@ -23,6 +72,8 @@ def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD):
                                          stripes["nus"], stripes["yrs"]):
 
         indx = np.where((dec > decmin) & (dec < decmax) & (is_in_ra_range(ra, ramin, ramax)))[0]
+        # remove overshoot
+        nu = nu - nu_overshoot_correction[int(year)]
         result[indx] = nu/year
         desired_counts[indx] = nu
     fpc = FootprintCount(mjd_start, nside=nside)
@@ -56,17 +107,17 @@ def get_desi_stripes():
     nus = [37.3, 32.4, 29.8, 29.1, 29.3, 24.6, 23.1, 20.4, 19.3,
            33.2, 28.4, 27.6, 25.8, 25.2, 22.8, 20.9, 20.8, 19.3]
     # original years
-    yrs = np.array([
-         4, 3, 2, 2, 4, 3, 1, 1, 5,
-         4, 3, 3, 2, 2, 1, 1, 4, 5,
-     ])
+    # yrs = np.array([
+    #     4, 3, 2, 2, 4, 3, 1, 1, 5,
+    #     4, 3, 3, 2, 2, 1, 1, 4, 5,
+    # ])
     # swapped times for NGC "Niji+VST", "Niji+VST" fields w/ "POLU+IBIS" fields
     # reordered stripes for POU+IBIS to make bigger coherent areas
     # Y1 = 2029. Year stripe to be delivered
-    #yrs = np.array([
-    #    4, 4, 3, 3, 2, 2, 1, 1, 5,
-    #    4, 3, 3, 2, 2, 1, 1, 4, 5,
-    #])
+    yrs = np.array([
+        4, 4, 3, 3, 2, 2, 1, 1, 5,
+        4, 3, 3, 2, 2, 1, 1, 4, 5,
+    ])
     ramins = np.array([
         121.01, 122.33, 123.69, 125.11, 126.60, 128.16, 129.81, 131.56, 133.43,
         315.57, 313.82, 312.19, 310.66, 309.21, 307.84, 306.53, 305.29, 304.10,

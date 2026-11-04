@@ -319,8 +319,15 @@ def get_scheduler(for_simulation=False) -> tuple[int, CoreScheduler]:
         safety_mask_params=safety_mask_params,
     )
 
-    # Define the DESI u-band survey
-    desi_u = lsst_surveys.gen_desi_u(nside=nside)
+    # Define the DESI u-band survey and grizy in Y1 survey
+    desi_surveys = lsst_surveys.gen_desi_u(nside=nside)
+    for desi_band in ["g", "r", "i", "z", "y"]:
+        desi_per_band = lsst_surveys.gen_desi_grizy_for_y1(
+            nside=nside,
+            band1s=[desi_band],
+            band2s=[desi_band]
+        )
+        desi_surveys.extend(desi_per_band)
 
     # Define Roman scripted surveys
     roman_ignore = [
@@ -417,7 +424,7 @@ def get_scheduler(for_simulation=False) -> tuple[int, CoreScheduler]:
         roman_micro,
         ddfs,
         #template_surveys,
-        desi_u,
+        desi_surveys,
         long_gaps,
         blobs,
         neo_micro,
