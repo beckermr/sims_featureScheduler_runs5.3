@@ -7,6 +7,47 @@ from by_count_utils import FootprintCount, FootprintCountBasisFunction
 from survey_start import SURVEY_START_MJD
 
 
+Y3_MEDIAN_VISITS_SIM53_PER_BAND = {
+    "u": 10,
+    "g": 16,
+    "r": 40,
+    "i": 41,
+    "z": 33,
+    "y": 34,
+}
+
+
+def make_desi_footprints_for_y1_per_band(target_band, nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD, target_nvisits=None):
+    """make a footprint basis function for the DESI observations for DESI Y1 only per band
+    """
+
+    target_nvisits = target_nvisits or Y3_MEDIAN_VISITS_SIM53_PER_BAND
+
+    ra, dec = hpid2_ra_dec(nside, np.arange(hp.nside2npix(nside)))
+
+    stripes = get_desi_stripes()
+    result = np.zeros(ra.size, dtype=float)
+
+    desired_counts = np.zeros(ra.size, dtype=float)
+
+    for ramin, ramax, decmin, decmax, nu, year, name in zip(stripes["ramins"], stripes["ramaxs"],
+                                         stripes["decmins"], stripes["decmaxs"],
+                                         stripes["nus"], stripes["yrs"], stripes["names"]):
+
+        if int(year) != 1 or name not in ["SGC-6", "SGC-7"]:
+            continue
+
+        indx = np.where((dec > decmin) & (dec < decmax) & (is_in_ra_range(ra, ramin, ramax)))[0]
+        result[indx] = target_nvisits[target_band]
+        desired_counts[indx] = target_nvisits[target_band]
+    fpc = FootprintCount(mjd_start, nside=nside)
+    fpc.set_footprint(target_band, result)
+    bf = FootprintCountBasisFunction(bandname=target_band, nside=nside, footprint=fpc, mult_factor=1.,
+                                     mask_reward_below=-4, mask_above_count=None,)
+
+    return bf, desired_counts
+
+
 def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD, nu_overshoot_correction=None):
     """make a footprint basis function for the DESI observations.
     """
