@@ -7,9 +7,17 @@ from by_count_utils import FootprintCount, FootprintCountBasisFunction
 from survey_start import SURVEY_START_MJD
 
 
-def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD):
+def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD, nu_overshoot_correction=None):
     """make a footprint basis function for the DESI observations.
     """
+
+    nu_overshoot_correction = nu_overshoot_correction or {
+        1: 0,
+        2: 0,
+        3: 5,
+        4: 5,
+        5: 5,
+    }
 
     ra, dec = hpid2_ra_dec(nside, np.arange(hp.nside2npix(nside)))
 
@@ -23,6 +31,8 @@ def make_desi_footprints(nside=DEFAULT_NSIDE, mjd_start=SURVEY_START_MJD):
                                          stripes["nus"], stripes["yrs"]):
 
         indx = np.where((dec > decmin) & (dec < decmax) & (is_in_ra_range(ra, ramin, ramax)))[0]
+        # remove overshoot
+        nu = nu - nu_overshoot_correction[int(year)]
         result[indx] = nu/year
         desired_counts[indx] = nu
     fpc = FootprintCount(mjd_start, nside=nside)
