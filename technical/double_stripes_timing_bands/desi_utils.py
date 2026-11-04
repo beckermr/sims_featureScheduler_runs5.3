@@ -56,17 +56,17 @@ def get_desi_stripes():
     nus = [37.3, 32.4, 29.8, 29.1, 29.3, 24.6, 23.1, 20.4, 19.3,
            33.2, 28.4, 27.6, 25.8, 25.2, 22.8, 20.9, 20.8, 19.3]
     # original years
-    yrs = np.array([
-         4, 3, 2, 2, 4, 3, 1, 1, 5,
-         4, 3, 3, 2, 2, 1, 1, 4, 5,
-     ])
+    # yrs = np.array([
+    #     4, 3, 2, 2, 4, 3, 1, 1, 5,
+    #     4, 3, 3, 2, 2, 1, 1, 4, 5,
+    # ])
     # swapped times for NGC "Niji+VST", "Niji+VST" fields w/ "POLU+IBIS" fields
     # reordered stripes for POU+IBIS to make bigger coherent areas
     # Y1 = 2029. Year stripe to be delivered
-    #yrs = np.array([
-    #    4, 4, 3, 3, 2, 2, 1, 1, 5,
-    #    4, 3, 3, 2, 2, 1, 1, 4, 5,
-    #])
+    yrs = np.array([
+        4, 4, 3, 3, 2, 2, 1, 1, 5,
+        4, 3, 3, 2, 2, 1, 1, 4, 5,
+    ])
     ramins = np.array([
         121.01, 122.33, 123.69, 125.11, 126.60, 128.16, 129.81, 131.56, 133.43,
         315.57, 313.82, 312.19, 310.66, 309.21, 307.84, 306.53, 305.29, 304.10,
